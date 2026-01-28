@@ -2,9 +2,326 @@
     {
         "id": "955a0032eade9dd9",
         "type": "tab",
-        "label": "Flow 1",
+        "label": "config-files TEST",
         "disabled": false,
         "info": "",
         "env": []
+    },
+    {
+        "id": "ec796389903c1d0f",
+        "type": "subflow",
+        "name": "config-files",
+        "info": "Read and merge configuration files (JSON). \r\n\r\n### Inputs\r\nIf the node receives any message, it will read the \r\nconfig files and merge their contents.\r\n\r\nOptionally a directory and file search pattern can \r\nbe specified in the input message. These will \r\noverwrite the corresponding node properties.\r\n\r\n: configDir (string)         : Directory with config files. Absolute or relative path.\r\n: configFilePattern (string) : Search pattern for config files, e.g. `\"*.json\"`\r\n\r\n### Outputs\r\n\r\n: payload (object) : Merged content from config files.\r\n\r\n### Details\r\nThe `defaultConfig` property can be used to define \r\nconfiguration values that are missing in the \r\nconfiguration files.\r\n\r\nThe `configDir` is searched non-recursively for \r\nconfiguration files using the filename pattern \r\n`configFilePattern`.\r\nThe files are sorted by their file names and merged in \r\nthis order. \r\n\r\nThe content of the `defaultConfig` property and the \r\nconfiguration files must by valid JSON.\r\n\r\n### References\r\n\r\n - [GitHub](https://github.com/schaeren/node-red-contrib-config-files) - source code\r\n ",
+        "category": "",
+        "in": [
+            {
+                "x": 60,
+                "y": 40,
+                "wires": [
+                    {
+                        "id": "3c563aca59369641"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 720,
+                "y": 240,
+                "wires": [
+                    {
+                        "id": "81b18d7aad495891",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "configDir",
+                "type": "str",
+                "value": "/config"
+            },
+            {
+                "name": "configFilePattern",
+                "type": "str",
+                "value": "*.json"
+            },
+            {
+                "name": "defaultConfig",
+                "type": "json",
+                "value": "{}"
+            }
+        ],
+        "meta": {
+            "module": "node-red-contrib-config-files",
+            "type": "config-files",
+            "version": "0.1.1",
+            "author": "Peter Schären <peter.schaeren@gmail.com>",
+            "desc": "Read and merge configuration files (JSON).",
+            "keywords": "node-red,config-files,config,json",
+            "license": "Apache-2.0"
+        },
+        "color": "#b0c2ba",
+        "icon": "node-red/parser-json.svg",
+        "status": {
+            "x": 720,
+            "y": 120,
+            "wires": [
+                {
+                    "id": "73c98834cb90c714",
+                    "port": 1
+                }
+            ]
+        }
+    },
+    {
+        "id": "b46481b92cb28e07",
+        "type": "file in",
+        "z": "ec796389903c1d0f",
+        "name": "read file",
+        "filename": "payload",
+        "filenameType": "msg",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "utf8",
+        "allProps": false,
+        "x": 200,
+        "y": 200,
+        "wires": [
+            [
+                "f3c260d6c082e422"
+            ]
+        ]
+    },
+    {
+        "id": "bebafe14f9cc467b",
+        "type": "split",
+        "z": "ec796389903c1d0f",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 330,
+        "y": 160,
+        "wires": [
+            [
+                "ef0d2e4ce8988133"
+            ]
+        ]
+    },
+    {
+        "id": "ef0d2e4ce8988133",
+        "type": "function",
+        "z": "ec796389903c1d0f",
+        "name": "make paths absolute",
+        "func": "const configDir = env.get('configDir');\nmsg.payload = path.join(configDir, msg.payload);\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "path",
+                "module": "path"
+            }
+        ],
+        "x": 520,
+        "y": 160,
+        "wires": [
+            [
+                "b46481b92cb28e07"
+            ]
+        ]
+    },
+    {
+        "id": "f3c260d6c082e422",
+        "type": "json",
+        "z": "ec796389903c1d0f",
+        "name": "to JS",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 350,
+        "y": 200,
+        "wires": [
+            [
+                "81b18d7aad495891"
+            ]
+        ]
+    },
+    {
+        "id": "e2a872db2d9086e6",
+        "type": "sort",
+        "z": "ec796389903c1d0f",
+        "name": "",
+        "order": "ascending",
+        "as_num": false,
+        "target": "payload",
+        "targetType": "msg",
+        "msgKey": "payload",
+        "msgKeyType": "elem",
+        "seqKey": "payload",
+        "seqKeyType": "msg",
+        "x": 190,
+        "y": 160,
+        "wires": [
+            [
+                "bebafe14f9cc467b"
+            ]
+        ]
+    },
+    {
+        "id": "81b18d7aad495891",
+        "type": "function",
+        "z": "ec796389903c1d0f",
+        "name": "merge configs",
+        "func": "// const _t = global.get('libTracer');\n// _t.init(node, msg, flow.get('enableTracer')); \n\nlet config = flow.get('mergedConfig');\nconfig = lodash.merge(config, msg.payload);\n// _t.trace(node, msg, 'config', lodash.cloneDeep(config));\n\nmsg.payload = config;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\n\nconst defaultConfig = env.get('defaultConfig') ?? {};\n\nflow.set('mergedConfig', defaultConfig);\n",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "lodash",
+                "module": "lodash"
+            }
+        ],
+        "x": 220,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3c563aca59369641",
+        "type": "function",
+        "z": "ec796389903c1d0f",
+        "name": "get config dir and filename pattern",
+        "func": "const configDir = msg.configDir ?? null;\nif (typeof configDir === 'string' && configDir.trim().length > 0) {\n    msg.configDir = configDir;\n}\nelse {\n    msg.configDir = env.get('configDir');\n}\n\nconst configFilePattern = msg.configFilePattern ?? null;\nif (typeof configFilePattern === 'string' && configFilePattern.trim().length > 0) {\n    msg.configFilePattern = configFilePattern;\n}\nelse {\n    msg.configFilePattern = env.get('configFilePattern');\n}\n\nmsg.topic = 'configFiles';\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 280,
+        "y": 40,
+        "wires": [
+            [
+                "2b5d6f663d02b82f"
+            ]
+        ]
+    },
+    {
+        "id": "73c98834cb90c714",
+        "type": "function",
+        "z": "ec796389903c1d0f",
+        "name": "status",
+        "func": "const count = Array.isArray(msg.payload) ? msg.payload.length : 0;\n\nlet statusText = `No config files found in '${msg.configDir}' with pattern '${msg.configFilePattern}' -> using default config`;\nif (count > 0) {\n    statusText = `Found ${count} config files in '${msg.configDir}' with pattern '${msg.configFilePattern}'`;\n}\nconst status = { fill: \"blue\", shape: \"ring\", text: statusText };\n\nmsg.configFiles = msg.payload;\n\nreturn [ msg, { payload: status} ];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 190,
+        "y": 120,
+        "wires": [
+            [
+                "e2a872db2d9086e6"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "2b5d6f663d02b82f",
+        "type": "fs-list",
+        "z": "ec796389903c1d0f",
+        "name": "Find config files",
+        "path": "configDir",
+        "pathType": "msg",
+        "pattern": "configFilePattern",
+        "patternType": "msg",
+        "filter": "files",
+        "recursive": false,
+        "follow": false,
+        "property": "payload",
+        "propertyType": "msg",
+        "x": 220,
+        "y": 80,
+        "wires": [
+            [
+                "73c98834cb90c714"
+            ]
+        ]
+    },
+    {
+        "id": "9528a0fd073abf73",
+        "type": "inject",
+        "z": "955a0032eade9dd9",
+        "name": "",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "start",
+        "x": 90,
+        "y": 80,
+        "wires": [
+            [
+                "32e40cc757d73eab"
+            ]
+        ]
+    },
+    {
+        "id": "32e40cc757d73eab",
+        "type": "subflow:ec796389903c1d0f",
+        "z": "955a0032eade9dd9",
+        "name": "",
+        "env": [
+            {
+                "name": "defaultConfig",
+                "value": "{\"test_A\":\"Value A\",\"test_B\":123.456}",
+                "type": "json"
+            }
+        ],
+        "x": 270,
+        "y": 80,
+        "wires": [
+            [
+                "6c395c367d03813f"
+            ]
+        ]
+    },
+    {
+        "id": "6c395c367d03813f",
+        "type": "debug",
+        "z": "955a0032eade9dd9",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 80,
+        "wires": []
     }
 ]
